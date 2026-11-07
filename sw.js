@@ -1,7 +1,7 @@
-// Eva: guarda la app para abrirla sin conexión; la agenda y el plan siempre intentan traer lo más nuevo.
-const VERSION = "eva-v1";
-const SHELL = ["./", "index.html", "app.js", "manifest.json", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
-const DATA = ["agenda.json", "plan.json"];
+// Eva: guarda la app para abrirla sin conexión. Las notas viven en el teléfono (localStorage); plan.json siempre intenta traer lo más nuevo.
+const VERSION = "eva-v8";
+const SHELL = ["./", "index.html", "app.js", "manifest.json", "plan.json", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
+const DATA = ["plan.json"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -19,9 +19,7 @@ self.addEventListener("fetch", e => {
       .catch(() => caches.match(url.pathname).then(r => r || Response.error())));
     return;
   }
-  // todo lo demás (app, fuentes, 3D): copia guardada y se refresca en segundo plano
-  e.respondWith(caches.match(req, { ignoreSearch: true }).then(hit => {
-    const net = fetch(req).then(r => { if (r && (r.ok || r.type === "opaque")) { const k = r.clone(); caches.open(VERSION).then(c => c.put(req, k)); } return r; }).catch(() => hit);
-    return hit || net;
-  }));
+  // la app y sus piezas: red primero para estrenar cambios, copia guardada sin conexión
+  e.respondWith(fetch(req).then(r => { if (r && (r.ok || r.type === "opaque")) { const k = r.clone(); caches.open(VERSION).then(c => c.put(req, k)); } return r; })
+    .catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || Response.error())));
 });

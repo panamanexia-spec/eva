@@ -1,7 +1,7 @@
 {
   "name": "Eva",
   "short_name": "Eva",
-  "description": "Tu agenda y tu quincena en un solo lugar.",
+  "description": "Tu libreta y tu quincena en un solo lugar.",
   "lang": "es",
   "start_url": "./",
   "scope": "./",

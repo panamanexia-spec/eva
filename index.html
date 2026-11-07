@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Eva</title>
-<meta name="description" content="Eva, tu agenda y tu quincena en un solo lugar.">
+<meta name="description" content="Eva, tu libreta y tu quincena en un solo lugar.">
 <meta name="apple-mobile-web-app-title" content="Eva">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -18,7 +18,7 @@
 <style>
 html{background:#FBEFF4}
 @media (prefers-color-scheme: dark){html{background:#12070D}}
-/* Pantalla de inicio: escenario con Eva, cifras del día, línea de tiempo, quincena y pagos, y un botón para hablar con Eva. */
+/* Libreta: escenario con Eva, cifras del día, áreas, notas, quincena, respaldo y un campo para escribir. */
 :root{
   --bg:#FBEFF4; --ink:#26101C; --ink-2:#4A2A3B; --muted:#8B6A7C; --hair:rgba(120,50,90,.12);
   --card:rgba(255,255,255,.62); --card-2:rgba(255,255,255,.86); --edge:rgba(255,255,255,.9); --edge-2:rgba(255,190,215,.55);
@@ -195,6 +195,41 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:23px;letter-spa
 .dockbtn .ph{flex:1;font-weight:700;font-size:16px;letter-spacing:-.01em}
 .dockbtn .go{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(140deg,var(--accent),var(--accent-2));color:var(--accent-ink);flex:none}
 
+
+/* libreta */
+.quick{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 4px;scroll-padding:16px}
+.quick::-webkit-scrollbar{display:none}
+.quick button{flex:none;border:0;cursor:pointer;padding:10px 16px;border-radius:999px;font-weight:700;font-size:14px;background:var(--card);color:var(--ink-2);box-shadow:var(--sh-1),inset 0 1px 0 var(--edge);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);display:inline-flex;align-items:center;gap:7px;transition:transform .35s var(--spring),background .25s}
+.quick button[style]::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.quick button:active{transform:scale(.92)}
+.quick button[aria-pressed="true"]{background:linear-gradient(140deg,var(--accent),var(--accent-2));color:var(--accent-ink)}
+.quick button[aria-pressed="true"]::before{background:currentColor}
+.ghead{font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:12px 4px 2px}
+.ghead:first-child{margin-top:0}
+.note{align-items:flex-start;padding:12px 14px 12px 12px}
+.note .check{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--c);background:transparent;display:grid;place-items:center;cursor:pointer;color:transparent;padding:0;margin-top:1px;transition:transform .35s var(--spring),background .2s}
+.note .check svg{width:16px;height:16px}
+.note .check:active{transform:scale(.8)}
+.note.done .check{background:var(--c);color:#fff}
+.note.done .ttl{text-decoration:line-through;text-decoration-color:var(--muted);color:var(--muted)}
+.note.done{opacity:.62}
+.note .tag{border:0;background:color-mix(in srgb,var(--c) 14%,transparent);padding:3px 8px;border-radius:999px;align-self:flex-start;cursor:pointer}
+.picker{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px 6px;animation:slide .3s var(--ease)}
+.picker button{border:0;cursor:pointer;padding:7px 12px;border-radius:999px;font-weight:700;font-size:13px;background:color-mix(in srgb,var(--c) 15%,var(--card-2));color:var(--c)}
+.picker button[aria-current]{background:var(--c);color:#fff}
+.picker .del{--c:var(--muted);margin-left:auto}
+.btns{display:flex;gap:10px}
+.btn{flex:1;border:0;cursor:pointer;padding:13px 16px;border-radius:999px;font-weight:800;font-size:15px;background:var(--card-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--hair);transition:transform .35s var(--spring)}
+.btn.main{background:linear-gradient(140deg,var(--accent),var(--accent-2));color:var(--accent-ink);box-shadow:none}
+.btn:active{transform:scale(.95)}
+.composer{cursor:text}
+.composer:active{transform:none}
+.composer input{flex:1;min-width:0;border:0;background:transparent;outline:none;font:inherit;font-weight:600;font-size:16px;color:var(--ink);padding:10px 0}
+.composer input::placeholder{color:var(--muted);font-weight:600}
+.composer .go{border:0;cursor:pointer;transition:transform .35s var(--spring)}
+.composer .go:active{transform:scale(.88)}
+.composer:focus-within{box-shadow:var(--sh-2),inset 0 1px 0 var(--edge),0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
+
 /* Eva face (SVG) */
 .shadow{fill:var(--stage-floor)}
 .iris{fill:var(--eye)}
@@ -254,16 +289,13 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:23px;letter-spa
       <span class="eyebrow"><span id="wday">Hoy</span> · <b id="dnum">--.--</b></span>
       <h1><span id="greet">Hola,</span> <em>Adela</em></h1>
     </div>
-    <button class="iconbtn glass" id="refresh" type="button" aria-label="Actualizar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
-    </button>
   </header>
 
   <section class="stage glass rise" style="--i:1" aria-label="Eva">
     <div class="spot"></div><canvas class="motes" id="motes"></canvas><div class="floor"></div>
     <div class="chipline">
-      <span class="badge glass" id="holiday"><i class="live"></i><span id="liveTxt">En línea</span></span>
-      <span class="badge glass mood" id="moodBadge">Pensando</span>
+      <span class="badge glass" id="holiday"><i class="live"></i><span id="liveTxt">Libreta</span></span>
+      <span class="badge glass mood" id="moodBadge">Tranquila</span>
     </div>
     <div class="petbox" id="petbox">
       <div class="halo"></div>
@@ -301,20 +333,22 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:23px;letter-spa
       </svg>
       <button class="pet" id="pet" type="button" aria-label="Eva. Tócala."></button>
     </div>
-    <p class="say glass" aria-live="polite"><span class="who">Eva</span><span id="say">Mirando tu agenda…</span></p>
+    <p class="say glass" aria-live="polite"><span class="who">Eva</span><span id="say">Hola, Adela.</span></p>
   </section>
 
   <div class="stats">
-    <div class="stat glass pop" style="--i:3"><span class="ic" style="background:linear-gradient(140deg,var(--accent),var(--accent-2))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></span><span class="n" id="sToday">–</span><span class="l">cosas hoy</span></div>
+    <div class="stat glass pop" style="--i:3"><span class="ic" style="background:linear-gradient(140deg,var(--accent),var(--accent-2))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></span><span class="n" id="sToday">–</span><span class="l">pendientes hoy</span></div>
     <div class="stat glass pop" style="--i:4"><span class="ic" style="background:linear-gradient(140deg,#F08A3C,var(--t-pago))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v18M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.6 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3"/></svg></span><span class="n" id="sPay">–</span><span class="l">pagos en 7 días</span></div>
     <div class="stat glass pop" style="--i:5"><span class="ic" style="background:linear-gradient(140deg,#2FC79A,var(--mint))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span><span class="n" id="sDays">–</span><span class="l" id="sDaysL">días a quincena</span></div>
   </div>
 
-  <div class="notice glass" id="calNotice" hidden></div>
+  <nav class="quick rise" id="quick" style="--i:3" aria-label="Áreas">
+    <button type="button" data-v="hoy" aria-pressed="true">Hoy</button><button type="button" data-v="casa" style="--c:var(--t-casa)">Casa</button><button type="button" data-v="amelie" style="--c:var(--t-amelie)">Amelie</button><button type="button" data-v="killian" style="--c:var(--t-killian)">Killian</button><button type="button" data-v="pago" style="--c:var(--t-pago)">Pagos</button><button type="button" data-v="kam" style="--c:var(--t-kam)">KAM</button><button type="button" data-v="nexia" style="--c:var(--t-nexia)">Nexia</button>
+  </nav>
 
   <section class="rise" style="--i:4" aria-labelledby="dayTitle">
     <div class="dayhead"><h2 class="t" id="dayTitle">Hoy</h2><span class="kicker" id="dayCount"></span></div>
-    <div class="tl" id="tl"><div class="empty glass">Cargando tu agenda…</div></div>
+    <div class="tl" id="tl"></div>
   </section>
 
   <section class="rise" style="--i:5" aria-label="Resumen">
@@ -335,14 +369,21 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:23px;letter-spa
         <span class="lab">Pagos cerca</span>
         <ul class="plist" id="plist"><li><span style="color:var(--muted)">Cargando…</span></li></ul>
       </div>
+      <div class="tile glass wide">
+        <span class="lab">Tu libreta vive en este teléfono</span>
+        <span class="fine">Haz un respaldo de vez en cuando. Si cambias de teléfono o borras la app, lo restauras aquí.</span>
+        <div class="btns"><button type="button" class="btn main" id="backup">Respaldo</button><button type="button" class="btn" id="restore">Restaurar</button></div>
+        <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+      </div>
     </div>
   </section>
 </main>
-<nav class="dock" aria-label="Eva">
-  <a class="dockbtn glass" id="openChat" href="https://claude.ai/new" aria-label="Hablar con Eva">
-    <span class="mini" aria-hidden="true"></span><span class="ph">Hablar con Eva</span>
-    <span class="go" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M9 7h8v8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-  </a>
-</nav>
+<div class="dock">
+  <form class="dockbtn glass composer" id="composer" autocomplete="off">
+    <span class="mini" aria-hidden="true"></span>
+    <input id="q" type="text" enterkeyhint="send" placeholder="Escribe como hablas…" aria-label="Escribe una nota o pregunta">
+    <button class="go" type="submit" aria-label="Guardar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </form>
+</div>
 <script src="app.js" defer></script>
 </body></html>
