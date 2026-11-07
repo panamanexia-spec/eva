@@ -1,7 +1,7 @@
 {
   "name": "Eva",
   "short_name": "Eva",
-  "description": "Tu libreta y tu quincena en un solo lugar.",
+  "description": "Tu libreta para apuntar y preguntar.",
   "lang": "es",
   "start_url": "./",
   "scope": "./",

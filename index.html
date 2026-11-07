@@ -222,13 +222,6 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:23px;letter-spa
 .btn{flex:1;border:0;cursor:pointer;padding:13px 16px;border-radius:999px;font-weight:800;font-size:15px;background:var(--card-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--hair);transition:transform .35s var(--spring)}
 .btn.main{background:linear-gradient(140deg,var(--accent),var(--accent-2));color:var(--accent-ink);box-shadow:none}
 .btn:active{transform:scale(.95)}
-.composer{cursor:text}
-.composer:active{transform:none}
-.composer input{flex:1;min-width:0;border:0;background:transparent;outline:none;font:inherit;font-weight:600;font-size:16px;color:var(--ink);padding:10px 0}
-.composer input::placeholder{color:var(--muted);font-weight:600}
-.composer .go{border:0;cursor:pointer;transition:transform .35s var(--spring)}
-.composer .go:active{transform:scale(.88)}
-.composer:focus-within{box-shadow:var(--sh-2),inset 0 1px 0 var(--edge),0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
 
 .note .meta{font-size:12.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .linkbtn{align-self:center;border:0;background:none;color:var(--muted);font-weight:700;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:4px 8px}
@@ -251,6 +244,72 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:23px;letter-spa
 .sheetbox{width:100%;max-width:560px;max-height:88vh;overflow-y:auto;overscroll-behavior:contain;background:var(--bg);border-radius:30px 30px 0 0;padding:18px 16px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;box-shadow:var(--sh-2);animation:sheetin .4s var(--ease)}
 .sheethead{display:flex;align-items:center;justify-content:space-between}
 @keyframes sheetin{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+
+
+/* ===== chat ===== */
+html,body{height:100%}
+body{overflow:hidden;padding-left:0;padding-right:0}
+.app{height:100vh;height:100dvh;max-width:600px;margin:0 auto;display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+.top{flex:none;padding-bottom:10px}
+.top h1{font-size:clamp(21px,6.6vw,30px);white-space:nowrap}
+.top .hello{min-width:0}
+.rsbtn{position:absolute;left:10px;bottom:10px;z-index:4;padding:7px 12px;font-size:12.5px}
+.topbtns{display:flex;align-items:center;gap:8px;flex:none}
+.pillbtn{border:0;cursor:pointer;padding:9px 14px;border-radius:999px;font-weight:700;font-size:13.5px;color:var(--ink-2);transition:transform .35s var(--spring)}
+.pillbtn:active{transform:scale(.92)}
+.app .stage{flex:none;min-height:0;height:176px;border-radius:28px}
+.app .stage .petbox{width:150px;height:150px;top:22px}
+.app .stage .floor{bottom:10px;width:40%}
+.app .stage .chipline{top:10px;left:10px;right:10px}
+.chat{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:8px;padding:14px 2px 12px;mask-image:linear-gradient(transparent 0,#000 14px)}
+.daysep{align-self:center;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:8px 0 2px}
+.msg{max-width:84%;padding:10px 14px;border-radius:22px;font-size:15.5px;line-height:1.4;overflow-wrap:anywhere;animation:pop .35s var(--spring) both}
+.msg.yo{align-self:flex-end;background:linear-gradient(140deg,var(--accent),var(--accent-2));color:var(--accent-ink);border-bottom-right-radius:8px;font-weight:600}
+.msg.eva{align-self:flex-start;background:var(--card-2);color:var(--ink);border-bottom-left-radius:8px;box-shadow:var(--sh-1),inset 0 0 0 1px var(--hair);font-weight:500}
+.msg .time{display:block;font-size:10.5px;font-weight:700;opacity:.6;margin-top:3px;text-align:right}
+.msg.eva .time{text-align:left}
+.msg .items{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.msg .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.msg .acts button{border:0;cursor:pointer;padding:9px 14px;border-radius:999px;font-weight:800;font-size:14px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+.msg .acts button.main{background:linear-gradient(140deg,var(--accent),var(--accent-2));color:var(--accent-ink)}
+.typing{align-self:flex-start;display:flex;gap:5px;padding:14px 16px;border-radius:22px;border-bottom-left-radius:8px;background:var(--card-2);box-shadow:inset 0 0 0 1px var(--hair)}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:dots 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+.it{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:16px;background:color-mix(in srgb,var(--c) 7%,var(--card));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 18%,transparent)}
+.it .check{flex:none;width:28px;height:28px;border-radius:50%;border:2px solid var(--c);background:transparent;display:grid;place-items:center;cursor:pointer;color:transparent;padding:0;transition:transform .35s var(--spring),background .2s}
+.it .check svg{width:15px;height:15px}
+.it .check:active{transform:scale(.8)}
+.it .check:disabled{opacity:.4;cursor:default}
+.it .tx{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.it .tag{border:0;font:inherit;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);padding:2px 7px;border-radius:999px;align-self:flex-start;cursor:pointer}
+.it .ttl{font-weight:600;font-size:14.5px}
+.it .meta{font-size:12px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.it.done .check{background:var(--c);color:#fff}
+.it.done .ttl{text-decoration:line-through;color:var(--muted)}
+.it.done{opacity:.65}
+.it+.picker{margin:2px 0 4px}
+.composer{flex:none;display:flex;align-items:center;gap:10px;padding:8px 0 calc(10px + env(safe-area-inset-bottom,0px))}
+.field{flex:1;min-width:0;display:flex;align-items:center;gap:6px;border-radius:999px;padding:4px 5px 4px 18px;box-shadow:var(--sh-1),inset 0 1px 0 var(--edge)}
+.field:focus-within{box-shadow:var(--sh-1),0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
+.field input{flex:1;min-width:0;border:0;background:transparent;outline:none;font:inherit;font-weight:600;font-size:16px;color:var(--ink);padding:12px 0}
+.field input::placeholder{color:var(--muted)}
+.send{flex:none;width:40px;height:40px;border:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;background:var(--ink);color:var(--bg)}
+.send svg{width:18px;height:18px}
+.mic{flex:none;width:60px;height:60px;border:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--accent-ink);background:linear-gradient(140deg,var(--accent),var(--accent-2));box-shadow:var(--sh-2);transition:transform .35s var(--spring);position:relative}
+.mic svg{width:26px;height:26px}
+.mic:active{transform:scale(.9)}
+.mic.on::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:3px solid var(--accent);animation:ping 1.4s cubic-bezier(0,0,.2,1) infinite}
+.rsec{display:flex;flex-direction:column;gap:8px}
+.rhead{display:flex;align-items:baseline;justify-content:space-between}
+.rsec h3{margin:0;font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.02em}
+.rlist{display:flex;flex-direction:column;gap:6px}
+.rlist .none{color:var(--muted);font-weight:600;font-size:14px;padding:4px 2px}
+.qlist{display:grid;grid-template-columns:1fr auto;gap:8px 12px;margin:0;padding:14px 16px;border-radius:20px;font-size:14.5px}
+.qlist dt{color:var(--muted);font-weight:600}
+.qlist dd{margin:0;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.qlist dd.plus{color:var(--mint)}
+.sheetbox .tile{border-radius:24px}
+.sheetbox .btn{width:100%}
 
 /* Eva face (SVG) */
 .shadow{fill:var(--stage-floor)}
@@ -305,18 +364,20 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:23px;letter-spa
 <body>
 <div class="aurora" aria-hidden="true"><div class="pan"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i><i class="blob b4"></i></div><div class="grain"></div></div>
 
-<main class="wrap">
-  <header class="top rise" style="--i:0">
+<div class="app">
+  <header class="top">
     <div class="hello">
       <span class="eyebrow"><span id="wday">Hoy</span> · <b id="dnum">--.--</b></span>
       <h1><span id="greet">Hola,</span> <em>Adela</em></h1>
     </div>
-    <button class="iconbtn glass gear" id="openAjustes" type="button" aria-label="Ajustes" aria-haspopup="dialog">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
-    </button>
+    <div class="topbtns">
+      <button class="iconbtn glass gear" id="openAjustes" type="button" aria-label="Ajustes" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
   </header>
 
-  <section class="stage glass rise" style="--i:1" aria-label="Eva">
+  <section class="stage glass" aria-label="Eva">
     <div class="spot"></div><canvas class="motes" id="motes"></canvas><div class="floor"></div>
     <div class="chipline">
       <span class="badge glass" id="holiday"><i class="live"></i><span id="liveTxt">Libreta</span></span>
@@ -358,61 +419,46 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:23px;letter-spa
       </svg>
       <button class="pet" id="pet" type="button" aria-label="Eva. Tócala."></button>
     </div>
-    <p class="say glass" aria-live="polite"><span class="who">Eva</span><span id="say">Hola, Adela.</span></p>
+    <button class="pillbtn glass rsbtn" id="openResumen" type="button" aria-haspopup="dialog">Mi resumen</button>
   </section>
 
+  <main class="chat" id="chat" aria-live="polite" aria-label="Conversación con Eva"></main>
 
-  <nav class="quick rise" id="quick" style="--i:3" aria-label="Áreas">
-    <button type="button" data-v="hoy" aria-pressed="true">Hoy</button><button type="button" data-v="casa" style="--c:var(--t-casa)">Casa</button><button type="button" data-v="amelie" style="--c:var(--t-amelie)">Amelie</button><button type="button" data-v="killian" style="--c:var(--t-killian)">Killian</button><button type="button" data-v="pago" style="--c:var(--t-pago)">Pagos</button><button type="button" data-v="kam" style="--c:var(--t-kam)">Kata</button><button type="button" data-v="nexia" style="--c:var(--t-nexia)">Nexia</button>
-  </nav>
-
-  <section class="rise" style="--i:4" aria-labelledby="dayTitle">
-    <div class="dayhead"><h2 class="t" id="dayTitle">Hoy</h2><span class="kicker" id="dayCount"></span></div>
-    <div class="tl" id="tl"></div>
-  </section>
-
-</main>
-<div class="dock">
-  <form class="dockbtn glass composer" id="composer" autocomplete="off">
-    <span class="mini" aria-hidden="true"></span>
-    <input id="q" type="text" enterkeyhint="send" placeholder="Escribe como hablas…" aria-label="Escribe una nota o pregunta">
-    <button class="go" type="submit" aria-label="Guardar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <form class="composer" id="composer" autocomplete="off">
+    <div class="field glass">
+      <input id="q" type="text" enterkeyhint="send" placeholder="Escribe o dicta…" aria-label="Escribe a Eva">
+      <button class="send" id="sendBtn" type="submit" aria-label="Enviar" hidden><svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <button class="mic" id="mic" type="button" aria-label="Dictar con la voz" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>
+    </button>
   </form>
 </div>
+
+<div class="sheet" id="resumen" role="dialog" aria-modal="true" aria-labelledby="rsTitle" hidden>
+  <div class="sheetbox">
+    <div class="sheethead"><h2 id="rsTitle">Mi resumen</h2><button type="button" class="iconbtn glass closer" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <section class="rsec"><div class="rhead"><h3>Pendientes de hoy</h3><span class="kicker" id="rsHoyN"></span></div><div class="rlist" id="rsHoy"></div></section>
+    <section class="rsec"><div class="rhead"><h3>Pagos en 7 días</h3><span class="kicker" id="rsPayN"></span></div><div class="rlist" id="rsPay"></div></section>
+    <section class="rsec"><div class="rhead"><h3>Quincena</h3><span class="kicker" id="rsQN"></span></div><dl class="qlist glass" id="rsQ"></dl><p class="fine" id="rsQFine"></p></section>
+  </div>
+</div>
+
 <div class="sheet" id="ajustes" role="dialog" aria-modal="true" aria-labelledby="ajTitle" hidden>
   <div class="sheetbox">
-    <div class="sheethead"><h2 id="ajTitle">Ajustes</h2><button type="button" class="iconbtn glass" id="closeAjustes" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-  <div class="stats">
-    <div class="stat glass pop" style="--i:3"><span class="ic" style="background:linear-gradient(140deg,var(--accent),var(--accent-2))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></span><span class="n" id="sToday">–</span><span class="l">pendientes hoy</span></div>
-    <div class="stat glass pop" style="--i:4"><span class="ic" style="background:linear-gradient(140deg,#F08A3C,var(--t-pago))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v18M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.6 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3"/></svg></span><span class="n" id="sPay">–</span><span class="l">pagos en 7 días</span></div>
-    <div class="stat glass pop" style="--i:5"><span class="ic" style="background:linear-gradient(140deg,#2FC79A,var(--mint))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span><span class="n" id="sDays">–</span><span class="l" id="sDaysL">días a quincena</span></div>
-  </div>
-    <div class="bento">
-      <div class="tile glass wide">
-        <span class="lab">Quincena</span>
-        <div class="ringbox">
-          <div class="ring">
-            <svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="payg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="var(--accent-2)"/></linearGradient></defs>
-              <circle class="trk" cx="60" cy="60" r="48"/><circle class="val" id="ringVal" cx="60" cy="60" r="48" stroke-dasharray="301.6" stroke-dashoffset="301.6"/></svg>
-            <div class="mid"><div><b id="ringN">–</b><small id="ringL">días</small></div></div>
-          </div>
-          <div class="paycol"><span class="payd" id="payWhen"></span><dl class="money" id="payMoney"></dl></div>
-        </div>
-        <span class="fine" id="payFine"></span>
-      </div>
-      <div class="tile glass wide">
-        <span class="lab">Pagos cerca</span>
-        <ul class="plist" id="plist"><li><span style="color:var(--muted)">Cargando…</span></li></ul>
-      </div>
-      <div class="tile glass wide">
-        <span class="lab">Tu libreta</span>
-        <span class="fine">Se guarda en tu nube y queda una copia en este teléfono por si no hay internet. Si quieres, descarga un respaldo de vez en cuando.</span>
+    <div class="sheethead"><h2 id="ajTitle">Ajustes</h2><button type="button" class="iconbtn glass closer" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="tile glass">
+      <span class="lab">Tu libreta</span>
+      <span class="fine">Se guarda en tu nube y queda una copia en este teléfono por si no hay internet. Si quieres, descarga un respaldo de vez en cuando.</span>
         <div class="btns"><button type="button" class="btn main" id="backup">Respaldo</button><button type="button" class="btn" id="restore">Restaurar</button></div>
         <button type="button" class="linkbtn" id="changeKey">Cambiar llave</button>
-        <input type="file" id="restoreFile" accept="application/json,.json" hidden>
-      </div>
+      <input type="file" id="restoreFile" accept="application/json,.json" hidden>
     </div>
-  
+    <div class="tile glass">
+      <span class="lab">Conversación</span>
+      <span class="fine">El chat se guarda solo en este teléfono. Borrarlo no toca tus pendientes.</span>
+      <button type="button" class="btn" id="clearChat">Borrar conversación</button>
+    </div>
   </div>
 </div>
 <div class="gate" id="gate" hidden>
