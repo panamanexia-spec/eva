@@ -200,7 +200,6 @@ const KEYS=[
 ];
 const WD=["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
 const MN=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-const KEY="eva.libreta.v1";
 
 function norm(s){ let o=""; for(const ch of s){ const c=ch.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase(); o+=c.length===1?c:ch.toLowerCase().slice(0,1)||" "; } return o; }
 const dayMs=864e5, T0=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
@@ -239,18 +238,109 @@ function stripSpans(text,n,spans){
 }
 function isQuestion(raw,n){ return /[¿?]/.test(raw)||/^(que tengo|que hay|que me toca|que falta|que tenia|cuales|tengo algo|hay algo|muestrame|ensename)\b/.test(n.trim()); }
 
-/* ---------- guardado en el teléfono ---------- */
-let NOTES=[];
-function loadNotes(){ try{ const j=JSON.parse(localStorage.getItem(KEY)||"[]"); NOTES=Array.isArray(j)?j.filter(x=>x&&x.text&&x.date):[]; }catch(e){ NOTES=[]; } }
-function saveNotes(){ try{ localStorage.setItem(KEY,JSON.stringify(NOTES)); return true; }catch(e){ say("No pude guardar en este teléfono. Haz un respaldo por si acaso."); return false; } }
-try{ navigator.storage&&navigator.storage.persist&&navigator.storage.persist(); }catch(e){}
+/* ---------- hora y monto ---------- */
+function detectTime(n){
+  const res=[/\ba las (\d{1,2})(?:[:.](\d{2}))?(?:\s*(am|pm|a\.? ?m\.?|p\.? ?m\.?|de la manana|de la tarde|de la noche))?/, /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)(?=\s|$|[,.;])/, /\b(\d{1,2}):(\d{2})\b/];
+  for(const re of res){ const x=re.exec(n); if(!x) continue;
+    let h=+x[1], mi=+(x[2]||0); const suf=(x[3]||"").replace(/[\s.]/g,"");
+    if(h>23||mi>59) continue;
+    if(/^(pm|delatarde|delanoche)$/.test(suf)&&h<12) h+=12; else if(/^(am|delamanana)$/.test(suf)&&h===12) h=0; else if(!suf&&h>=1&&h<=6) h+=12;
+    return {time:String(h).padStart(2,"0")+":"+String(mi).padStart(2,"0"),span:[x.index,x.index+x[0].length]}; }
+  return {time:null,span:null};
+}
+function detectAmount(n){
+  const x=/\$\s?(\d+(?:[.,]\d{1,2})?)|\b(\d+(?:[.,]\d{1,2})?)\s?(?:dolares|usd|balboas)\b/.exec(n);
+  return x?{amount:Number((x[1]||x[2]).replace(",",".")),span:[x.index,x.index+x[0].length]}:{amount:null,span:null};
+}
+function fmtTime(t){ if(!t) return ""; let [h,mi]=t.split(":").map(Number); const ap=h<12?"a. m.":"p. m."; h=h%12||12; return `${h}:${String(mi).padStart(2,"0")} ${ap}`; }
+
+/* ---------- nube (Supabase) + copia en el teléfono ---------- */
+const SB="https://hhpoezwionzxmayebbpx.supabase.co", PK="sb_publishable_0R-GV1JwJOl8125gNiZ4ZA_yw5CDssI";
+const LLAVE_K="eva.llave", COPIA_K="eva.copia.v1", COLA_K="eva.cola.v1", OLD_K="eva.libreta.v1";
+const AREA_DB={casa:"Casa",amelie:"Amelie",killian:"Killian",pago:"Pago",kam:"KAM",nexia:"Nexia",personal:"Personal"};
+const AREA_IN={casa:"casa",amelie:"amelie",killian:"killian",pago:"pago",kam:"kam",kata:"kam",nexia:"nexia",personal:"personal"};
+const ls={get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }, del(k){ try{ localStorage.removeItem(k); }catch(e){} }};
+let LLAVE=ls.get(LLAVE_K,null), NOTES=[], COLA=ls.get(COLA_K,[]), EN_LINEA=null;
+class LlaveMala extends Error{}
+async function rpc(fn,args,llave=LLAVE){
+  const r=await fetch(`${SB}/rest/v1/rpc/${fn}`,{method:"POST",headers:{apikey:PK,"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({p_llave:llave,...args})});
+  if(r.ok) return r.json();
+  let j={}; try{ j=await r.json(); }catch(e){}
+  if(j.code==="28000"||/llave/i.test(j.message||"")) throw new LlaveMala("llave");
+  const e=new Error(j.message||("HTTP "+r.status)); e.server=true; throw e;
+}
+function fromRow(r){ return {id:r.id,text:r.texto||"",area:AREA_IN[String(r.area||"").toLowerCase()]||"personal",date:r.fecha||dOf(0),noDate:!r.fecha,time:r.hora?String(r.hora).slice(0,5):null,amount:r.monto!=null?Number(r.monto):null,done:!!r.hecho,created:Date.parse(r.creado)||0}; }
+function saveCopy(){ ls.set(COPIA_K,{at:Date.now(),notas:NOTES}); }
+function loadCopy(){ const c=ls.get(COPIA_K,null); NOTES=(c&&Array.isArray(c.notas))?c.notas:[]; }
+function setOnline(v){ EN_LINEA=v; refreshSide(); }
+let flushing=false;
+async function flush(){
+  if(flushing||!LLAVE) return; flushing=true;
+  try{
+    while(COLA.length){
+      const o=COLA[0];
+      try{
+        if(o.op==="add"){ const row=await rpc("eva_agregar",o.args); const loc=NOTES.find(x=>x.id===o.tmp); if(loc&&row&&row.id){ loc.id=row.id; loc.created=Date.parse(row.creado)||loc.created; } COLA.slice(1).forEach(q=>{ if(q.id===o.tmp) q.id=row.id; }); }
+        else if(o.op==="upd") await rpc("eva_actualizar",{p_id:o.id,...o.args});
+        else if(o.op==="del") await rpc("eva_borrar",{p_id:o.id});
+        COLA.shift(); ls.set(COLA_K,COLA); saveCopy(); EN_LINEA=true;
+      }catch(e){
+        if(e instanceof LlaveMala){ askKey(true); break; }
+        if(e.server){ COLA.shift(); ls.set(COLA_K,COLA); continue; }
+        EN_LINEA=false; break;
+      }
+    }
+  }finally{ flushing=false; }
+}
+function send(op){ COLA.push(op); ls.set(COLA_K,COLA); saveCopy(); flush().then(()=>refreshSide()); }
+let syncing=false;
+async function sync(){
+  if(!LLAVE||syncing) return; syncing=true;
+  try{
+    await flush();
+    if(!COLA.length){
+      const rows=await rpc("eva_listar",{p_desde:null,p_hasta:null,p_incluir_hechos:true});
+      NOTES=(Array.isArray(rows)?rows:[]).map(fromRow); saveCopy(); EN_LINEA=true;
+    }
+  }catch(e){ if(e instanceof LlaveMala){ askKey(true); } else EN_LINEA=false; }
+  finally{ syncing=false; if(!openPicker) render(); refreshSide(); }
+}
+async function migrateOld(){
+  const old=ls.get(OLD_K,null); if(!Array.isArray(old)||!old.length){ ls.del(OLD_K); return; }
+  for(const x of old) if(x&&x.text&&!x.done) send({op:"add",tmp:"tmp-"+uid(),args:{p_texto:x.text,p_area:AREA_DB[x.area]||"Personal",p_fecha:x.date||null,p_hora:null,p_monto:null}});
+  ls.del(OLD_K);
+}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+/* ---------- llave ---------- */
+function askKey(bad){
+  if(bad){ LLAVE=null; ls.del(LLAVE_K); }
+  $("gateMsg").textContent=bad?"Esa llave no funcionó. Revísala con calma y vuelve a intentar; aquí te espero.":"Escríbela una sola vez. Se queda guardada en este teléfono.";
+  $("gateMsg").classList.toggle("warn",!!bad);
+  $("gate").hidden=false; document.body.classList.add("locked");
+  setTimeout(()=>$("gateIn").focus(),250);
+}
+$("gateForm").addEventListener("submit",async ev=>{
+  ev.preventDefault(); const v=$("gateIn").value.trim(), msg=$("gateMsg"), btn=$("gateBtn"); if(!v) return;
+  btn.disabled=true; btn.textContent="Revisando…"; msg.classList.remove("warn");
+  try{
+    const rows=await rpc("eva_listar",{p_desde:null,p_hasta:null,p_incluir_hechos:true},v);
+    LLAVE=v; ls.set(LLAVE_K,v); $("gateIn").value=""; $("gate").hidden=true; document.body.classList.remove("locked");
+    NOTES=(Array.isArray(rows)?rows:[]).map(fromRow); EN_LINEA=true; saveCopy(); await migrateOld(); render(); refreshSide();
+    celebrate("¡Lista, Adela! Ya tengo tu libreta.");
+  }catch(e){
+    msg.classList.add("warn");
+    msg.textContent=e instanceof LlaveMala?"Esa llave no funcionó. Revísala con calma y vuelve a intentar; aquí te espero.":"No pude conectarme ahora. Revisa tu internet y vuelve a intentar.";
+  }finally{ btn.disabled=false; btn.textContent="Entrar"; }
+});
+$("changeKey").onclick=()=>{ if(confirm("¿Quieres escribir otra llave de Eva?")){ LLAVE=null; ls.del(LLAVE_K); askKey(false); } };
 
 /* ---------- vistas ---------- */
 let VIEW={kind:"hoy"}, openPicker=null;
 function niceDay(s){ const k=diff(s); if(k===0) return "Hoy"; if(k===1) return "Mañana"; if(k===-1) return "Ayer"; const d=new Date(s+"T00:00:00Z"); return cap(DIAS[d.getUTCDay()])+" "+d.getUTCDate()+(Math.abs(k)>6?" "+MESES[d.getUTCMonth()].slice(0,3):""); }
 function whenPhrase(from,to,label){ if(label) return label; if(from===to) { const k=diff(from); if(k===0) return "Hoy"; if(k===1) return "Mañana"; const d=new Date(from+"T00:00:00Z"); return "El "+DIAS[d.getUTCDay()]+" "+d.getUTCDate(); } return "Esos días"; }
-const byDate=(a,b)=>(a.date.localeCompare(b.date))||(a.done-b.done)||(a.created-b.created);
+const byDate=(a,b)=>(a.date.localeCompare(b.date))||(a.done-b.done)||((a.time||"99").localeCompare(b.time||"99"))||(a.created-b.created);
 
 function select(){
   const v=VIEW, t=dOf(0);
@@ -292,19 +382,24 @@ function row(n,i){
   const tx=document.createElement("div"); tx.className="tx";
   const tg=document.createElement("button"); tg.type="button"; tg.className="tag"; tg.textContent=LABEL[n.area]; tg.setAttribute("aria-label","Área: "+LABEL[n.area]+". Toca para cambiar."); tg.onclick=()=>picker(c,n);
   const ti=document.createElement("span"); ti.className="ttl"; ti.textContent=n.text;
-  tx.append(tg,ti); c.append(ck,tx); return c;
+  tx.append(tg,ti);
+  const meta=[n.time?fmtTime(n.time):"",n.amount!=null?usd(n.amount):""].filter(Boolean).join(" · ");
+  if(meta){ const m=document.createElement("span"); m.className="meta"; m.textContent=meta; tx.append(m); }
+  c.append(ck,tx); return c;
 }
 function picker(card,n){
   if(openPicker){ const same=openPicker.card===card; openPicker.el.remove(); openPicker=null; if(same) return; }
   const p=document.createElement("div"); p.className="picker";
   for(const a of AREAS){ const b=document.createElement("button"); b.type="button"; b.textContent=LABEL[a]; b.style.setProperty("--c",`var(${TAGS[a]})`); if(a===n.area) b.setAttribute("aria-current","true");
-    b.onclick=()=>{ n.area=a; saveNotes(); render(); refreshSide(); setFace("happy"); say(`Listo, lo pasé a ${LABEL[a]}.`); settleIn(2600); }; p.append(b); }
+    b.onclick=()=>{ n.area=a; send({op:"upd",id:n.id,args:{p_area:AREA_DB[a]}}); render(); refreshSide(); setFace("happy"); say(`Listo, lo pasé a ${LABEL[a]}.`); settleIn(2600); }; p.append(b); }
   const del=document.createElement("button"); del.type="button"; del.className="del"; del.textContent="Borrar";
-  del.onclick=()=>{ NOTES=NOTES.filter(x=>x.id!==n.id); saveNotes(); render(); refreshSide(); say("Borrada. Una cosa menos."); settleIn(2600); };
+  del.onclick=()=>{ NOTES=NOTES.filter(x=>x.id!==n.id);
+    if(String(n.id).startsWith("tmp-")&&COLA.some(q=>q.tmp===n.id)){ COLA=COLA.filter(q=>q.tmp!==n.id&&q.id!==n.id); ls.set(COLA_K,COLA); saveCopy(); } else send({op:"del",id:n.id});
+    render(); refreshSide(); say("Borrada. Una cosa menos."); settleIn(2600); };
   p.append(del); card.after(p); openPicker={card,el:p};
 }
 function toggle(n){
-  n.done=!n.done; n.doneAt=n.done?Date.now():null; saveNotes(); render(); refreshSide();
+  n.done=!n.done; send({op:"upd",id:n.id,args:{p_hecho:n.done}}); render(); refreshSide();
   if(n.done){ const left=NOTES.filter(x=>x.date===dOf(0)&&!x.done).length; celebrate(left?`¡Hecho! Te quedan ${left} para hoy.`:"¡Hecho! Ya no te queda nada para hoy."); }
 }
 
@@ -330,15 +425,17 @@ function answer(raw,n){
   $("dayTitle").scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"start"});
 }
 function add(raw,n){
-  const area=detectArea(n)||"personal", dt=detectDate(n), date=dt.from||dOf(0);
-  let text=stripSpans(raw.trim(),n,dt.spans); text=text.charAt(0).toUpperCase()+text.slice(1);
-  const note={id:uid(),text,area,date,done:false,created:Date.now()};
-  NOTES.push(note); if(!saveNotes()) return;
+  const area=detectArea(n)||"personal", dt=detectDate(n), tm=detectTime(n), am=detectAmount(n), date=dt.from||dOf(0);
+  const spans=dt.spans.concat([tm.span,am.span].filter(Boolean));
+  let text=stripSpans(raw.trim(),n,spans); text=text.charAt(0).toUpperCase()+text.slice(1);
+  const note={id:"tmp-"+uid(),text,area,date,time:tm.time,amount:am.amount,done:false,created:Date.now()};
+  NOTES.push(note);
+  send({op:"add",tmp:note.id,args:{p_texto:text,p_area:AREA_DB[area],p_fecha:date,p_hora:tm.time?tm.time+":00":null,p_monto:am.amount}});
   if(VIEW.kind!=="hoy"&&!(VIEW.kind==="area"&&VIEW.area===area)) VIEW={kind:"hoy"};
   if(VIEW.kind==="hoy"&&date!==dOf(0)) VIEW={kind:"area",area};
   render(); refreshSide();
-  const k=diff(date), cuando=k===0?"para hoy":k===1?"para mañana":"para el "+DIAS[new Date(date+"T00:00:00Z").getUTCDay()]+" "+new Date(date+"T00:00:00Z").getUTCDate();
-  celebrate(`Anotado en ${LABEL[area]} ${cuando}.`);
+  const k=diff(date), d=new Date(date+"T00:00:00Z"), cuando=k===0?"para hoy":k===1?"para mañana":"para el "+DIAS[d.getUTCDay()]+" "+d.getUTCDate();
+  celebrate(`Anotado en ${LABEL[area]} ${cuando}${tm.time?" a las "+fmtTime(tm.time):""}.`);
 }
 $("composer").addEventListener("submit",ev=>{
   ev.preventDefault(); const inp=$("q"), raw=inp.value.trim(); if(!raw) return; inp.value="";
@@ -374,7 +471,7 @@ function renderQuincena(plan){
 function upcomingPays(){
   const a=dOf(0), b=dOf(7);
   const fromPlan=((PLAN&&PLAN.pagos)||[]).filter(p=>p.date>=a&&p.date<=b).map(p=>({date:p.date,text:p.summary||p.text||p.nombre||"Pago"}));
-  const fromNotes=NOTES.filter(x=>x.area==="pago"&&!x.done&&x.date<=b).map(x=>({date:x.date<a?a:x.date,text:x.text}));
+  const fromNotes=NOTES.filter(x=>x.area==="pago"&&!x.done&&x.date<=b).map(x=>({date:x.date<a?a:x.date,text:x.text+(x.amount!=null?" · "+usd(x.amount):"")}));
   return fromPlan.concat(fromNotes).sort((x,y)=>x.date.localeCompare(y.date));
 }
 function renderPays(){
@@ -387,7 +484,9 @@ function renderPays(){
 function refreshSide(){
   const t=dOf(0), todayP=NOTES.filter(x=>x.date===t&&!x.done).length;
   countUp($("sToday"),todayP); renderPays();
-  $("liveTxt").textContent=NOTES.length?`Libreta · ${NOTES.length} nota${NOTES.length>1?"s":""}`:"Libreta lista";
+  const pend=NOTES.filter(x=>!x.done).length;
+  $("liveTxt").textContent=EN_LINEA===false?"Sin internet · usando la copia":(COLA.length?"Guardando…":(pend?`Al día · ${pend} pendiente${pend>1?"s":""}`:"Al día"));
+  $("holiday").classList.toggle("off",EN_LINEA===false);
   [baseMood,baseLine]=moodNow();
 }
 function moodNow(){
@@ -409,7 +508,7 @@ function moodNow(){
 
 /* ---------- respaldo ---------- */
 $("backup").onclick=async()=>{
-  const data={app:"eva",version:1,exportado:new Date().toISOString(),notas:NOTES};
+  const data={app:"eva",version:2,exportado:new Date().toISOString(),notas:NOTES};
   const name=`eva-respaldo-${dOf(0)}.json`, blob=new Blob([JSON.stringify(data,null,1)],{type:"application/json"});
   try{ const f=new File([blob],name,{type:"application/json"}); if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:"Respaldo de Eva"}); say("Respaldo listo. Guárdalo en Archivos."); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
@@ -419,21 +518,24 @@ $("restore").onclick=()=>$("restoreFile").click();
 $("restoreFile").onchange=async ev=>{
   const f=ev.target.files&&ev.target.files[0]; ev.target.value=""; if(!f) return;
   try{
-    const j=JSON.parse(await f.text()), arr=Array.isArray(j)?j:j.notas;
-    if(!Array.isArray(arr)) throw 0;
-    const ok=arr.filter(x=>x&&typeof x.text==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)).map(x=>({id:x.id||uid(),text:x.text,area:AREAS.includes(x.area)?x.area:"personal",date:x.date,done:!!x.done,created:x.created||Date.now(),doneAt:x.doneAt||null}));
-    const when=j.exportado?" del "+nice(pty(new Date(j.exportado))):"";
-    if(!confirm(`Esto reemplaza tu libreta (${NOTES.length} notas) con el respaldo${when} (${ok.length} notas). ¿Seguir?`)) return;
-    NOTES=ok; saveNotes(); VIEW={kind:"hoy"}; render(); refreshSide(); celebrate(`Listo, recuperé ${ok.length} nota${ok.length===1?"":"s"}.`);
+    const j=JSON.parse(await f.text()), arr=Array.isArray(j)?j:j.notas; if(!Array.isArray(arr)) throw 0;
+    const have=new Set(NOTES.map(x=>x.text+"|"+x.date));
+    const nuevas=arr.filter(x=>x&&typeof x.text==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&!x.done&&!have.has(x.text+"|"+x.date));
+    if(!nuevas.length){ say("Todo lo de ese respaldo ya está en tu libreta."); settleIn(3500); return; }
+    if(!confirm(`Voy a agregar ${nuevas.length} pendiente${nuevas.length>1?"s":""} del respaldo que no están en tu lista. ¿Seguir?`)) return;
+    for(const x of nuevas){ const area=AREAS.includes(x.area)?x.area:"personal", note={id:"tmp-"+uid(),text:x.text,area,date:x.date,time:x.time||null,amount:x.amount??null,done:false,created:Date.now()};
+      NOTES.push(note); send({op:"add",tmp:note.id,args:{p_texto:x.text,p_area:AREA_DB[area],p_fecha:x.date,p_hora:x.time?x.time+":00":null,p_monto:x.amount??null}}); }
+    VIEW={kind:"hoy"}; render(); refreshSide(); celebrate(`Listo, recuperé ${nuevas.length} pendiente${nuevas.length===1?"":"s"}.`);
   }catch(e){ setFace("sad"); say("Ese archivo no parece un respaldo de Eva."); settleIn(3500); }
 };
 
 /* ---------- arranque ---------- */
 setFace("calm");
-loadNotes(); render(); refreshSide(); renderQuincena(null); settle();
+loadCopy(); render(); refreshSide(); renderQuincena(null); settle();
+if(!LLAVE) askKey(false); else sync().then(()=>{ if(mood==="calm"||mood==="happy"||mood==="joy"||mood==="focus"||mood==="busy") settle(); });
 fetch("plan.json?v="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(p=>{ PLAN=p; renderQuincena(p); refreshSide(); }).catch(()=>{});
-addEventListener("storage",e=>{ if(e.key===KEY){ loadNotes(); render(); refreshSide(); } });
-document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&ymd(pty())!==TODAY) location.reload(); });
+addEventListener("online",()=>sync());
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState!=="visible") return; if(ymd(pty())!==TODAY){ location.reload(); return; } sync(); });
 
 /* ---------- instalar / sin conexión ---------- */
 if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));

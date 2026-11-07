@@ -230,6 +230,21 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:23px;letter-spa
 .composer .go:active{transform:scale(.88)}
 .composer:focus-within{box-shadow:var(--sh-2),inset 0 1px 0 var(--edge),0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
 
+.note .meta{font-size:12.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.linkbtn{align-self:center;border:0;background:none;color:var(--muted);font-weight:700;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:4px 8px}
+.badge.off .live{background:var(--t-pago);animation:none}
+.gate{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:24px 16px;background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.gatebox{width:100%;max-width:380px;border-radius:30px;padding:26px 22px 22px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;background:var(--card-2)}
+.gatebox h2{font-size:26px}
+.gatebox .fine{font-size:14px;line-height:1.4;margin:0}
+.gatebox .fine.warn{color:var(--accent);font-weight:700}
+.gatebox input{width:100%;border:0;border-radius:16px;padding:14px 16px;font:inherit;font-size:16px;font-weight:600;background:var(--card);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--hair);outline:none;text-align:center}
+.gatebox input:focus{box-shadow:inset 0 0 0 2px var(--accent)}
+.gatebox .btn{width:100%}
+.btn:disabled{opacity:.6}
+.mini.big{width:64px;height:64px}
+.mini.big::before,.mini.big::after{width:9px;height:12px}
+
 /* Eva face (SVG) */
 .shadow{fill:var(--stage-floor)}
 .iris{fill:var(--eye)}
@@ -370,9 +385,10 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:23px;letter-spa
         <ul class="plist" id="plist"><li><span style="color:var(--muted)">Cargando…</span></li></ul>
       </div>
       <div class="tile glass wide">
-        <span class="lab">Tu libreta vive en este teléfono</span>
-        <span class="fine">Haz un respaldo de vez en cuando. Si cambias de teléfono o borras la app, lo restauras aquí.</span>
+        <span class="lab">Tu libreta</span>
+        <span class="fine">Se guarda en tu nube y queda una copia en este teléfono por si no hay internet. Si quieres, descarga un respaldo de vez en cuando.</span>
         <div class="btns"><button type="button" class="btn main" id="backup">Respaldo</button><button type="button" class="btn" id="restore">Restaurar</button></div>
+        <button type="button" class="linkbtn" id="changeKey">Cambiar llave</button>
         <input type="file" id="restoreFile" accept="application/json,.json" hidden>
       </div>
     </div>
@@ -383,6 +399,15 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:23px;letter-spa
     <span class="mini" aria-hidden="true"></span>
     <input id="q" type="text" enterkeyhint="send" placeholder="Escribe como hablas…" aria-label="Escribe una nota o pregunta">
     <button class="go" type="submit" aria-label="Guardar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </form>
+</div>
+<div class="gate" id="gate" hidden>
+  <form class="gatebox glass" id="gateForm" autocomplete="off">
+    <span class="mini big" aria-hidden="true"></span>
+    <h2>Tu llave de Eva</h2>
+    <p class="fine" id="gateMsg">Escríbela una sola vez. Se queda guardada en este teléfono.</p>
+    <input id="gateIn" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Tu llave" aria-label="Tu llave de Eva">
+    <button class="btn main" id="gateBtn" type="submit">Entrar</button>
   </form>
 </div>
 <script src="app.js" defer></script>
