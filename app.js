@@ -186,8 +186,8 @@ $("pet").addEventListener("click",()=>{
 
 /* ================= Libreta ================= */
 const AREAS=["casa","amelie","killian","pago","kam","nexia","personal"];
-const LABEL={casa:"Casa",amelie:"Amelie",killian:"Killian",pago:"Pago",kam:"KAM",nexia:"Nexia",personal:"Personal"};
-const DE={casa:"de la casa",amelie:"de Amelie",killian:"de Killian",pago:"de pagos",kam:"de KAM",nexia:"de Nexia",personal:"personal"};
+const LABEL={casa:"Casa",amelie:"Amelie",killian:"Killian",pago:"Pago",kam:"Kata",nexia:"Nexia",personal:"Personal"};
+const DE={casa:"de la casa",amelie:"de Amelie",killian:"de Killian",pago:"de pagos",kam:"de Kata",nexia:"de Nexia",personal:"personal"};
 // orden = prioridad cuando una frase toca dos áreas ("pagar la cuota de la escuela" → Pago)
 const KEYS=[
   ["pago",/\b(pagar|pago|pagos|luz|agua|data|cuotas?|ph)\b/],
@@ -403,7 +403,7 @@ function moodNow(){
   if(late.length) return ["focus",`Te quedó ${late.length===1?"una cosa":late.length+" cosas"} de antes. ¿La hacemos hoy?`];
   if(n===0&&doneToday) return ["love","Terminaste todo lo de hoy. ¡Bravo!"];
   if(pays.length) return ["focus",`Se acerca un pago: ${pays[0].text.charAt(0).toLowerCase()+pays[0].text.slice(1)}. Lo tengo en la mira.`];
-  if(n===0) return (dow===0||dow===6)?["joy","Fin de semana libre. A descansar."]:["calm","Hoy no hay nada anotado. Buen día para avanzar en KAM o descansar un poco."];
+  if(n===0) return (dow===0||dow===6)?["joy","Fin de semana libre. A descansar."]:["calm","Hoy no hay nada anotado. Buen día para avanzar en Kata o descansar un poco."];
   return ["happy",`Hoy tienes ${n} cosa${n>1?"s":""}. Lo tienes, Adela.`];
 }
 
