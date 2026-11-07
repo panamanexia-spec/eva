@@ -1,0 +1,22 @@
+{
+  "generado": "2026-11-07T20:29:21.489Z",
+  "quincenas": {
+    "2026-11-15": {
+      "entra": 755.61,
+      "pagos": 459.35,
+      "fondo": 296.26
+    },
+    "2026-11-30": {
+      "entra": 805.61,
+      "pagos": 757.53,
+      "fondo": 48.08
+    },
+    "2026-12-15": {
+      "entra": 1211.61,
+      "pagos": 621.35,
+      "fondo": 590.26,
+      "nota": "Con décimo: $281.32 casa, $198.94 emergencia, $110 Credilla."
+    }
+  },
+  "pagos": []
+}
