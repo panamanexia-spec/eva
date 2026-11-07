@@ -1,5 +1,5 @@
 // Eva: guarda la app para abrirla sin conexión. Las notas viven en el teléfono (localStorage); plan.json siempre intenta traer lo más nuevo.
-const VERSION = "eva-v9";
+const VERSION = "eva-v10";
 const SHELL = ["./", "index.html", "app.js", "manifest.json", "plan.json", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 const DATA = ["plan.json"];
 

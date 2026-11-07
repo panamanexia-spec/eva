@@ -334,7 +334,16 @@ $("gateForm").addEventListener("submit",async ev=>{
     msg.textContent=e instanceof LlaveMala?"Esa llave no funcionó. Revísala con calma y vuelve a intentar; aquí te espero.":"No pude conectarme ahora. Revisa tu internet y vuelve a intentar.";
   }finally{ btn.disabled=false; btn.textContent="Entrar"; }
 });
-$("changeKey").onclick=()=>{ if(confirm("¿Quieres escribir otra llave de Eva?")){ LLAVE=null; ls.del(LLAVE_K); askKey(false); } };
+$("changeKey").onclick=()=>{
+  if(!confirm("¿Cambiar la llave de Eva?\n\nOjo: una llave nueva no sirve hasta que la actualices también en Supabase. Si la cambias aquí antes, Eva no podrá abrir tu lista.")) return;
+  closeAjustes(); LLAVE=null; ls.del(LLAVE_K); askKey(false);
+};
+/* ---------- ajustes ---------- */
+function openAjustes(){ $("ajustes").hidden=false; document.body.classList.add("locked"); refreshSide(); renderQuincena(PLAN); setTimeout(()=>$("closeAjustes").focus(),50); }
+function closeAjustes(){ $("ajustes").hidden=true; if($("gate").hidden) document.body.classList.remove("locked"); $("openAjustes").focus({preventScroll:true}); }
+$("openAjustes").onclick=openAjustes; $("closeAjustes").onclick=closeAjustes;
+$("ajustes").addEventListener("click",ev=>{ if(ev.target===$("ajustes")) closeAjustes(); });
+addEventListener("keydown",ev=>{ if(ev.key==="Escape"&&!$("ajustes").hidden) closeAjustes(); });
 
 /* ---------- vistas ---------- */
 let VIEW={kind:"hoy"}, openPicker=null;
